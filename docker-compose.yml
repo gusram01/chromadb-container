@@ -5,30 +5,33 @@ services:
       - "9411:9411"
     depends_on: [otel-collector]
     networks:
-      - internalchromanet
+      - orchestrator-own
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.111.0
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ${PWD}/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     networks:
-      - internalchromanet
+      - orchestrator-own
   server:
+    container_name: chromadb1
     image: chromadb/chroma
     volumes:
       - chroma_data:/data
     ports:
       - "${CHROMA_EXPOSED_PORT}:8000"
-    networks:
-      - internalchromanet
     env_file:
       - .env
     depends_on:
       - otel-collector
       - zipkin
+    networks:
+      - orchestrator-own
 
 networks:
-  internalchromanet:
+  orchestrator-own:
+    external: true
+    name: ${CHROMA_INT_NETWORK:-orchestrator-own}
 
 volumes:
   chroma_data:
